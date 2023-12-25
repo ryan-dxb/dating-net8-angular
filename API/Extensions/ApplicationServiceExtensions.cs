@@ -25,6 +25,9 @@ public static class ApplicationServiceExtensions
             });
         });
 
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
         return services;
     }
 }
