@@ -15,10 +15,12 @@ import { FormsModule } from '@angular/forms';
 import { HomeComponent } from './home/home.component';
 import { RegisterComponent } from './register/register.component';
 import { ListsComponent } from './lists/lists.component';
-import { MembersComponent } from './members/members.component';
 import { MessagesComponent } from './messages/messages.component';
 import { ToastrModule } from 'ngx-toastr';
 import { ErrorInterceptor } from './_interceptors/error.interceptor';
+import { MemberListComponent } from './members/member-list/member-list.component';
+import { MemberCardComponent } from './members/member-card/member-card.component';
+import { MemberDetailComponent } from './members/member-detail/member-detail.component';
 
 @NgModule({
   declarations: [
@@ -27,8 +29,10 @@ import { ErrorInterceptor } from './_interceptors/error.interceptor';
     HomeComponent,
     RegisterComponent,
     ListsComponent,
-    MembersComponent,
     MessagesComponent,
+    MemberListComponent,
+    MemberCardComponent,
+    MemberDetailComponent,
   ],
   imports: [
     BrowserModule,

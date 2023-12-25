@@ -1,6 +1,8 @@
-﻿using API.Data;
+﻿using System.Security.Claims;
+using API.Data;
 using API.DTOs;
 using API.Entities;
+using API.Extensions;
 using API.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +14,13 @@ public class UsersController : BaseApiController
 {
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
+    private readonly IPhotoService _photoService;
 
-    public UsersController(IUserRepository userRepository, IMapper mapper)
+    public UsersController(IUserRepository userRepository, IMapper mapper, IPhotoService photoService)
     {
         _userRepository = userRepository;
         _mapper = mapper;
+        _photoService = photoService;
     }
 
     [HttpGet]
@@ -41,5 +45,73 @@ public class UsersController : BaseApiController
         return Ok(userDto);
     }
 
+    [HttpPut]
+    public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
+    {
+        // Get the username from the token
+        var username = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+        if (username == null) return Unauthorized();
+
+        // Get the user from the database
+        var user = await _userRepository.GetUserByUsernameAsync(username);
+
+        if (user == null) return NotFound();
+
+        // Map from MemberUpdateDto to AppUser
+        _mapper.Map(memberUpdateDto, user);
+
+        // Update the user
+        _userRepository.Update(user);
+
+        // Save the changes to the database
+        if (await _userRepository.SaveAllAsync()) return NoContent();
+
+        return BadRequest("Failed to update user");
+    }
+
+    [HttpPost("add-photo")]
+    public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
+    {
+        // Get the username from the token
+        // Created a new extension method in API/Extensions/ClaimsPrincipalExtensions.cs
+        var username = User.GetUsername();
+
+        if (username == null) return Unauthorized();
+
+        // Get the user from the database
+        var user = await _userRepository.GetUserByUsernameAsync(username);
+
+        if (user == null) return NotFound();
+
+        // Upload the photo to Cloudinary
+        var result = await _photoService.AddPhotoAsync(file);
+
+        if (result.Error != null) return BadRequest(result.Error.Message);
+
+        // Create a new photo object
+        var photo = new Photo
+        {
+            Url = result.SecureUrl.AbsoluteUri,
+            PublicId = result.PublicId
+        };
+
+        // If the user doesn't have a main photo, set this photo as the main photo
+        if (user.Photos.Count == 0)
+        {
+            photo.IsMain = true;
+        }
+
+        // Add the photo to the user's photos
+        user.Photos.Add(photo);
+
+        // Save the changes to the database
+        if (await _userRepository.SaveAllAsync())
+        {
+            // Map from Photo to PhotoDto
+            return CreatedAtRoute("GetUser", new { username = user.UserName }, _mapper.Map<PhotoDto>(photo));
+        }
+
+        return BadRequest("Problem adding photo");
+    }
 }

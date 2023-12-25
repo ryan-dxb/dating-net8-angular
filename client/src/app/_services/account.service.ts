@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
 import { User } from '../_models/user';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -10,7 +11,7 @@ import { User } from '../_models/user';
 // Services are singletons, so we don't need to use the decorator
 // We can inject this service into any component or other service
 export class AccountService {
-  baseUrl = 'http://localhost:5001/api/';
+  baseUrl = environment.apiUrl;
   private currentUserSource = new BehaviorSubject<User | null>(null);
   // BehaviorSubject is a type of Subject that allows us to set the initial value
 
