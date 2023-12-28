@@ -109,9 +109,46 @@ public class UsersController : BaseApiController
         if (await _userRepository.SaveAllAsync())
         {
             // Map from Photo to PhotoDto
-            return CreatedAtRoute("GetUser", new { username = user.UserName }, _mapper.Map<PhotoDto>(photo));
+            // return CreatedAtRoute("GetUser", new { username = user.UserName }, _mapper.Map<PhotoDto>(photo));
+            return CreatedAtAction(nameof(GetUser), new { username = user.UserName }, _mapper.Map<PhotoDto>(photo));
         }
 
         return BadRequest("Problem adding photo");
+    }
+
+    [HttpPut("set-main-photo/{photoId}")]
+    public async Task<ActionResult> SetMainPhoto(int photoId)
+    {
+        // Get the username from the token
+        var username = User.GetUsername();
+
+        if (username == null) return Unauthorized();
+
+        // Get the user from the database
+        var user = await _userRepository.GetUserByUsernameAsync(username);
+
+        if (user == null) return NotFound();
+
+        // Get the photo from the database
+        var photo = user.Photos.FirstOrDefault(x => x.Id == photoId);
+
+        if (photo == null) return NotFound();
+
+        // If the photo is already the main photo, return BadRequest
+        if (photo.IsMain) return BadRequest("This is already your main photo");
+
+        // Get the current main photo
+        var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
+
+        // If there is a current main photo, set it to false
+        if (currentMain != null) currentMain.IsMain = false;
+
+        // Set the new photo to true
+        photo.IsMain = true;
+
+        // Save the changes to the database
+        if (await _userRepository.SaveAllAsync()) return NoContent();
+
+        return BadRequest("Failed to set main photo");
     }
 }

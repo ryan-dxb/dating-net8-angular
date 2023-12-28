@@ -487,3 +487,5 @@ app.db
 appsettings.Development.json
 appsettings.json
 appsettings.Production.json
+
+notes.txt
