@@ -1,4 +1,5 @@
 ﻿using API.Data;
+using API.DTOs;
 using API.Helpers;
 using API.Interfaces;
 using API.Services;
@@ -32,6 +33,8 @@ public static class ApplicationServiceExtensions
         services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
 
         services.AddScoped<IPhotoService, PhotoService>();
+        services.AddScoped<ILikesRepository, LikeRepository>();
+        services.AddScoped<LogUserActivity>();
 
         return services;
     }
